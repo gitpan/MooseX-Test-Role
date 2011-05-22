@@ -1,0 +1,9 @@
+LICENSE
+MANIFEST
+META.yml
+Makefile.PL
+dist.ini
+lib/MooseX/Test/Role.pm
+t/01_use.t
+t/02_exports.t
+t/03_requires_ok.t

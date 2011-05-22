@@ -1,0 +1,56 @@
+
+use strict;
+use warnings;
+
+
+
+use ExtUtils::MakeMaker 6.30;
+
+
+
+my %WriteMakefileArgs = (
+  'ABSTRACT' => 'Test functions for Moose roles',
+  'AUTHOR' => 'Paul Boyd <pboyd@dev3l.net>',
+  'BUILD_REQUIRES' => {
+    'Test::More' => '0'
+  },
+  'CONFIGURE_REQUIRES' => {
+    'ExtUtils::MakeMaker' => '6.30'
+  },
+  'DISTNAME' => 'MooseX-Test-Role',
+  'EXE_FILES' => [],
+  'LICENSE' => 'perl',
+  'NAME' => 'MooseX::Test::Role',
+  'PREREQ_PM' => {
+    'Exporter' => '0',
+    'List::Util' => '0',
+    'Moose' => '0',
+    'Test::Builder' => '0'
+  },
+  'VERSION' => '0.01',
+  'test' => {
+    'TESTS' => 't/*.t'
+  }
+);
+
+
+unless ( eval { ExtUtils::MakeMaker->VERSION(6.56) } ) {
+  my $br = delete $WriteMakefileArgs{BUILD_REQUIRES};
+  my $pp = $WriteMakefileArgs{PREREQ_PM};
+  for my $mod ( keys %$br ) {
+    if ( exists $pp->{$mod} ) {
+      $pp->{$mod} = $br->{$mod} if $br->{$mod} > $pp->{$mod};
+    }
+    else {
+      $pp->{$mod} = $br->{$mod};
+    }
+  }
+}
+
+delete $WriteMakefileArgs{CONFIGURE_REQUIRES}
+  unless eval { ExtUtils::MakeMaker->VERSION(6.52) };
+
+WriteMakefile(%WriteMakefileArgs);
+
+
+
