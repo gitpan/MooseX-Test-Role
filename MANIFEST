@@ -7,3 +7,4 @@ lib/MooseX/Test/Role.pm
 t/01_use.t
 t/02_exports.t
 t/03_requires_ok.t
+t/04_consumer_of.t

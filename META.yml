@@ -3,6 +3,7 @@ abstract: 'Test functions for Moose roles'
 author:
   - 'Paul Boyd <pboyd@dev3l.net>'
 build_requires:
+  Test::Moose: 0
   Test::More: 0
 configure_requires:
   ExtUtils::MakeMaker: 6.30
@@ -14,8 +15,9 @@ meta-spec:
   version: 1.4
 name: MooseX-Test-Role
 requires:
+  Carp: 0
   Exporter: 0
   List::Util: 0
   Moose: 0
   Test::Builder: 0
-version: 0.01
+version: 0.02

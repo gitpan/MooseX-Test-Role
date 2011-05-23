@@ -12,6 +12,7 @@ my %WriteMakefileArgs = (
   'ABSTRACT' => 'Test functions for Moose roles',
   'AUTHOR' => 'Paul Boyd <pboyd@dev3l.net>',
   'BUILD_REQUIRES' => {
+    'Test::Moose' => '0',
     'Test::More' => '0'
   },
   'CONFIGURE_REQUIRES' => {
@@ -22,12 +23,13 @@ my %WriteMakefileArgs = (
   'LICENSE' => 'perl',
   'NAME' => 'MooseX::Test::Role',
   'PREREQ_PM' => {
+    'Carp' => '0',
     'Exporter' => '0',
     'List::Util' => '0',
     'Moose' => '0',
     'Test::Builder' => '0'
   },
-  'VERSION' => '0.01',
+  'VERSION' => '0.02',
   'test' => {
     'TESTS' => 't/*.t'
   }
