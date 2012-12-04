@@ -9,29 +9,31 @@ use ExtUtils::MakeMaker 6.30;
 
 
 my %WriteMakefileArgs = (
-  'ABSTRACT' => 'Test functions for Moose roles',
-  'AUTHOR' => 'Paul Boyd <pboyd@dev3l.net>',
-  'BUILD_REQUIRES' => {
-    'Test::Moose' => '0',
-    'Test::More' => '0'
+  "ABSTRACT" => "Test functions for Moose roles",
+  "AUTHOR" => "Paul Boyd <pboyd\@dev3l.net>",
+  "BUILD_REQUIRES" => {
+    "Test::Moose" => 0,
+    "Test::More" => 0
   },
-  'CONFIGURE_REQUIRES' => {
-    'ExtUtils::MakeMaker' => '6.30'
+  "CONFIGURE_REQUIRES" => {
+    "ExtUtils::MakeMaker" => "6.30"
   },
-  'DISTNAME' => 'MooseX-Test-Role',
-  'EXE_FILES' => [],
-  'LICENSE' => 'perl',
-  'NAME' => 'MooseX::Test::Role',
-  'PREREQ_PM' => {
-    'Carp' => '0',
-    'Exporter' => '0',
-    'List::Util' => '0',
-    'Moose' => '0',
-    'Test::Builder' => '0'
+  "DISTNAME" => "MooseX-Test-Role",
+  "EXE_FILES" => [],
+  "LICENSE" => "perl",
+  "NAME" => "MooseX::Test::Role",
+  "PREREQ_PM" => {
+    "Carp" => 0,
+    "Exporter" => 0,
+    "List::Util" => 0,
+    "Moose" => 0,
+    "Test::Builder" => 0,
+    "strict" => 0,
+    "warnings" => 0
   },
-  'VERSION' => '0.02',
-  'test' => {
-    'TESTS' => 't/*.t'
+  "VERSION" => "0.03",
+  "test" => {
+    "TESTS" => "t/*.t"
   }
 );
 

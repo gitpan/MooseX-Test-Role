@@ -2,6 +2,7 @@ LICENSE
 MANIFEST
 META.yml
 Makefile.PL
+README
 dist.ini
 lib/MooseX/Test/Role.pm
 t/01_use.t
