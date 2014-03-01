@@ -1,44 +1,67 @@
 use strict;
 use warnings;
 
-use Test::More tests => 8;
+use FindBin qw( $Bin );
+use lib $Bin;
+require util;
+
+use Test::More tests => 4;
+use Class::Load qw( try_load_class );
 
 use MooseX::Test::Role;
-use Test::Moose;
 
-use Moose qw//;
+subtest 'Moose'      => sub { test_role_type('Moose::Role') };
+subtest 'Moo'        => sub { test_role_type('Moo::Role') };
+subtest 'Role::Tiny' => sub { test_role_type('Role::Tiny') };
+subtest 'Bad arguments' => \&test_bad_arguments;
 
-my $role = Moose::Meta::Role->create_anon_role();
-$role->add_method( 'a', sub { 'return a' } );
+sub test_role_type {
+    my $type = shift;
 
-my $consumer = consumer_of( $role->name );
-does_ok( $consumer, $role->name,
-    'consumer_of should return an object that consumes the role' );
-is( $consumer->a, 'return a', 'role methods can be called on the object' );
+  SKIP: {
+        if ( !try_load_class($type) ) {
+            skip "$type not installed", 7;
+        }
 
-$consumer = consumer_of( $role->name, b => sub { 'from b' } );
-is( $consumer->b, 'from b',
-    'extra object methods can be passed to consumer_of' );
+        my $role = util::make_role(
+            type             => $type,
+            required_methods => ['c'],
+            methods          => [ 'sub a { "return a" }', ]
+        );
 
-$role->add_required_methods('c');
-$consumer = consumer_of( $role->name );
-can_ok( $consumer, 'c' );
-is( $consumer->c, undef, 'default required methods return undef' );
+        my $consumer = consumer_of($role);
+        ok( $consumer, 'consumer_of should return something' );
+        ok( $consumer->does($role),
+            'consumer_of should return an object that consumes the role' );
+        is( $consumer->a, 'return a',
+            'role methods can be called on the object' );
 
-$consumer = consumer_of( $role->name, c => sub { 'custom c' } );
-is( $consumer->c, 'custom c', 'explicit methods override the default' );
+        $consumer = consumer_of( $role, b => sub { 'from b' } );
+        is( $consumer->b, 'from b',
+            'extra object methods can be passed to consumer_of' );
 
-eval { consumer_of('asdf'); };
-like(
-    $@,
-    qr/first argument to consumer_of should be a role/,
-    'consumer_of should die when passed something that\'s not a role'
-);
+        $consumer = consumer_of($role);
+        can_ok( $consumer, 'c' );
+        is( $consumer->c, undef, 'default required methods return undef' );
 
-my $class = Moose::Meta::Class->create_anon_class();
-eval { consumer_of( $class->name ); };
-like(
-    $@,
-    qr/first argument to consumer_of should be a role/,
-    'consumer_of should die when passed something that\'s not a role'
-);
+        $consumer = consumer_of( $role, c => sub { 'custom c' } );
+        is( $consumer->c, 'custom c', 'explicit methods override the default' );
+    }
+}
+
+sub test_bad_arguments {
+    eval { consumer_of('asdf'); };
+    like(
+        $@,
+        qr/first argument to consumer_of should be a role/,
+        'consumer_of should die when passed something that\'s not a role'
+    );
+
+    eval { consumer_of( __PACKAGE__ ); };
+    like(
+        $@,
+        qr/first argument to consumer_of should be a role/,
+        'consumer_of should die when passed something that\'s not a role'
+    );
+}
+
