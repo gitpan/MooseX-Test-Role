@@ -1,6 +1,6 @@
 package MooseX::Test::Role;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 use strict;
 use warnings;
@@ -11,7 +11,7 @@ use List::Util qw( first );
 use Test::Builder;
 
 use Exporter qw( import unimport );
-our @EXPORT = qw( requires_ok consumer_of );
+our @EXPORT = qw( requires_ok consumer_of consuming_object consuming_class );
 
 sub requires_ok {
     my ( $role, @required ) = @_;
@@ -32,11 +32,13 @@ sub requires_ok {
     ok( 1, $msg );
 }
 
-sub consumer_of {
-    my ( $role, %methods ) = @_;
+sub consuming_class {
+    my ( $role, %args ) = @_;
+
+    my %methods = exists $args{methods} ? %{$args{methods}} : ();
 
     my $role_type = _derive_role_type($role);
-    confess 'first argument to consumer_of should be a role' unless $role_type;
+    confess 'first argument should be a role' unless $role_type;
 
     # Inline stubs for everything that's required so it'll pass the requires check.
     my @default_subs = map { "sub $_ { }" } _required_methods($role_type, $role);
@@ -54,9 +56,23 @@ sub consumer_of {
         *{$package . '::' . $method} = $subref;
     }
 
+    return $package;
+}
+
+sub consuming_object {
+    my $class = consuming_class(@_);
+
     # Moose and Moo can be instantiated and should be. Role::Tiny however isn't
     # a full OO implementation and so doesn't provide a "new" method.
-    return $package->can('new') ? $package->new() : $package;
+    return $class->can('new') ? $class->new() : $class;
+}
+
+sub consumer_of {
+    my ( $role, %methods ) = @_;
+
+    confess 'first argument to consumer_of should be a role' unless _derive_role_type($role);
+
+    return consuming_object( $role, methods => \%methods );
 }
 
 sub _required_methods {
@@ -67,11 +83,7 @@ sub _required_methods {
         @methods = $role->meta->get_required_method_list();
     }
     elsif ($role_type eq 'Role::Tiny') {
-
-        # This seems brittle, but there aren't many options to get this data.
-        # Moo relies on %INFO too, so it seems like it would be a hard thing
-        # for to move away from.
-        my $info = $Role::Tiny::INFO{$role};
+        my $info = _role_tiny_info($role);
         if ($info && ref($info->{requires}) eq 'ARRAY') {
             @methods = @{$info->{requires}};
         }
@@ -88,7 +100,7 @@ sub _derive_role_type {
         return 'Moose::Role';
     }
 
-    if (try_load_class('Role::Tiny') && Role::Tiny->is_role($role)) {
+    if (try_load_class('Role::Tiny') && _role_tiny_info($role)) {
         # Also covers older Moo::Roles
         return 'Role::Tiny';
     }
@@ -134,6 +146,15 @@ sub _build_consuming_package {
     return $package;
 }
 
+sub _role_tiny_info {
+    # This seems brittle, but there aren't many options to get this data.
+    # Moo relies on %INFO too, so it seems like it would be a hard thing
+    # for to move away from.
+
+    my $role = shift;
+    return $Role::Tiny::INFO{$role};
+}
+
 my $Test = Test::Builder->new();
 
 # Done this way for easier testing
@@ -150,14 +171,22 @@ MooseX::Test::Role - Test functions for Moose roles
 
 =head1 SYNOPSIS
 
-  use MooseX::Test::Role;
-  use Test::More tests => 2;
+    use MooseX::Test::Role;
+    use Test::More tests => 2;
 
-  requires_ok('MyRole', qw/method1 method2/);
+    requires_ok('MyRole', qw/method1 method2/);
 
-  my $consumer = consumer_of('MyRole', method1 => sub { 1 });
-  ok($consumer->myrole_method);
-  is($consumer->method1, 1);
+    my $consumer = consuming_object(
+        'MyRole',
+        methods => {
+            method1 => sub { 1 }
+        }
+    );
+    ok( $consumer->myrole_method );
+    is( $consumer->method1, 1 );
+
+    my $consuming_class = consuming_class('MyRole');
+    ok( $consuming_class->class_method() );
 
 =head1 DESCRIPTION
 
@@ -213,31 +242,44 @@ Moose can create anonymous classes which consume roles:
     $consumer->bar();
 
 This can still be tedious, especially for roles that require lots of methods.
-C<MooseX::Test::Role::consumer_of> simply makes this easier to do.
+C<MooseX::Test::Role> simply makes this easier to do.
 
 =head1 EXPORTED FUNCTIONS
 
 =over 4
 
-=item C<consumer_of ($role, %methods)>
+=item C<consuming_class($role, methods => \%methods)>
 
-Creates a class which consumes the role.
+Creates a class which consumes the role, and returns it's package name.
 
 C<$role> must be the package name of a role. L<Moose::Role>, L<Moo::Role> and
 L<Role::Tiny> are supported.
 
-Returns an instance of the consuming class where possible. However, if the
-class does not have a C<new()> method (which is commonly the case for
-L<Role::Tiny>), then the package name will be returned instead.
-
 Any method required by the role will be stubbed. To override the default stub
 methods, or to add additional methods, specify the name and a coderef:
 
-  consumer_of('MyRole',
-      method1 => sub { 'one' },
-      method2 => sub { 'two' },
-      required_method => sub { 'required' },
-  );
+    consuming_class('MyRole',
+        method1 => sub { 'one' },
+        method2 => sub { 'two' },
+        required_method => sub { 'required' },
+    );
+
+=item C<consuming_object($role, methods => \%methods)>
+
+Creates a class which consumes the role, and returns an instance of it.
+
+If the class does not have a C<new()> method (which is commonly the case for
+L<Role::Tiny>), then the package name will be returned instead.
+
+See C<consuming_class> for arguments. C<consuming_object> is essentially
+equivalent to:
+
+    consuming_class(@_)->new();
+
+=item C<consumer_of ($role, %methods)>
+
+Alias of C<consuming_object>, without named arguments. This is left in for
+compatibility, new code should use C<consuming_object>.
 
 =item C<requires_ok ($role, @methods)>
 

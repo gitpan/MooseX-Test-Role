@@ -20,4 +20,4 @@ requires:
   Exporter: '0'
   List::Util: '0'
   Test::Builder: '0'
-version: '0.04'
+version: '0.05'
